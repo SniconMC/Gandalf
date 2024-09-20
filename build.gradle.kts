@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     implementation("net.minestom:minestom-snapshots:65f75bb059") // Minestom
-    implementation("com.github.SniconMC:Utils:0.1.7")
+    implementation("com.github.SniconMC:Utils:0.1.7.1")
     implementation("com.github.SniconMC:Momentum:0.1.7")
     implementation("com.github.SniconMC:Sidebar:0.1.3")
     implementation("com.github.SniconMC:Container:0.1.6")

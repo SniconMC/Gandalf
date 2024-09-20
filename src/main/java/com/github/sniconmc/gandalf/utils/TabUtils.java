@@ -21,7 +21,7 @@ public class TabUtils {
         PlayerSkin skin = playerToSet.getSkin();
         List<PlayerInfoUpdatePacket.Property> properties = skin != null ? List.of(new PlayerInfoUpdatePacket.Property("textures", skin.textures(), skin.signature())) : List.of();
 
-        PlayerInfoUpdatePacket.Entry entry = new PlayerInfoUpdatePacket.Entry(playerToSet.getUuid(), playerToSet.getUsername(), properties, true, 0, GameMode.SURVIVAL, TextUtils.convertStringToComponent(displayName), null);
+        PlayerInfoUpdatePacket.Entry entry = new PlayerInfoUpdatePacket.Entry(playerToSet.getUuid(), playerToSet.getUsername(), properties, true, 0, GameMode.SURVIVAL, TextUtils.convertStringToComponent("<white>" + displayName + "</white>"), null);
         // Create the packet with the action to update the display name
         PlayerInfoUpdatePacket packet = new PlayerInfoUpdatePacket(PlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, entry);
 
