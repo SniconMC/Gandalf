@@ -88,7 +88,7 @@ public class DatabaseManager {
         }
 
         String sql = "INSERT INTO players (uuid, name, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, uuid);  // UUID of the player
