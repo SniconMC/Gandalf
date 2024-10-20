@@ -28,7 +28,6 @@ public class GandalfManager {
 
     private static Map<String, String> rankFileData;
     private static Map<String, String> professionFileData;
-    private static Map<String, DatabasePlayer> dataPlayers = new HashMap<>(); // Cached profiles
 
     private static Map<String, GandalfRank> rankMap = new HashMap<>();
     private static Map<String, GandalfProfession> professionMap = new HashMap<>();
@@ -126,11 +125,6 @@ public class GandalfManager {
     public static DatabasePlayer getDataPlayer(Player player) {
         String playerUUID = player.getUuid().toString();
 
-        // Check if the profile is already in memory
-        if (dataPlayers.containsKey(playerUUID)) {
-            return dataPlayers.get(playerUUID);
-        }
-
         // If not cached, load the dataPlayer from the database
         DatabasePlayer dataPlayer = GandalfMain.dbManager.getPlayer(playerUUID);
 
@@ -139,14 +133,9 @@ public class GandalfManager {
             GandalfMain.dbManager.insertPlayer(dataPlayer); // add to database
         }
 
-        dataPlayers.put(playerUUID, dataPlayer); // Cache it for future use
-
         return dataPlayer;
     }
 
-    public static void updateDataPlayers(DatabasePlayer dataPlayer){
-        dataPlayers.put(dataPlayer.getUuid().toString(), dataPlayer);
-    }
 
     /**
      * Retrieves a Gandalf rank configuration by its ID.

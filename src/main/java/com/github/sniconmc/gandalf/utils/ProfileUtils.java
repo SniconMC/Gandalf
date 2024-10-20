@@ -11,7 +11,6 @@ public class ProfileUtils {
 
     public static void update(DatabasePlayer dataPlayer) {
         GandalfMain.dbManager.insertPlayer(dataPlayer);
-        GandalfManager.updateDataPlayers(dataPlayer);
         SidebarManager.reloadSidebars(); // Reload the sidebar
     }
 
