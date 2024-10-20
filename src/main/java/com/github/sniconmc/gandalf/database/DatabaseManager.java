@@ -81,69 +81,70 @@ public class DatabaseManager {
         }
     }
 
-    public void insertPlayer(String uuid, String username, String rankId, String profession, String oldProfession, double emeralds, int achievements, double professionTotalXP, boolean playerVisibility, boolean geriVisibility, String professionFormat, boolean professionNumberFormat, long lastLoginTime) {
-        if (connection == null) {
-            System.out.println("Cannot insert player. No database connection.");
-            return;
-        }
-
-        String sql = "INSERT INTO players (uuid, username, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, uuid);  // UUID of the player
-            pstmt.setString(2, username);
-            pstmt.setString(3, rankId);
-            pstmt.setString(4, profession);
-            pstmt.setString(5, oldProfession);
-            pstmt.setDouble(6, emeralds);
-            pstmt.setInt(7, achievements);
-            pstmt.setDouble(8, professionTotalXP);
-            pstmt.setBoolean(9, playerVisibility);
-            pstmt.setBoolean(10, geriVisibility);
-            pstmt.setString(11, professionFormat);
-            pstmt.setBoolean(12, professionNumberFormat);
-            pstmt.setLong(13, lastLoginTime);
-            pstmt.executeUpdate();
-            System.out.println("Inserted player: " + username);
-        } catch (SQLException e) {
-            System.out.println("Error inserting player: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     public void insertPlayer(DatabasePlayer player) {
         if (connection == null) {
             System.out.println("Cannot insert player. No database connection.");
             return;
         }
 
-        String sql = "INSERT INTO players (uuid, username, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
+        // Check if the player already exists
+        String checkSql = "SELECT COUNT(*) FROM players WHERE uuid = ?";
+        String insertSql = "INSERT INTO players (uuid, name, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String updateSql = "UPDATE players SET name = ?, rank_id = ?, profession = ?, old_profession = ?, emeralds = ?, achievements = ?, profession_total_xp = ?, player_visibility = ?, geri_visibility = ?, profession_format = ?, profession_number_format = ?, last_login_time = ? WHERE uuid = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // Use the player object's getters to retrieve the data
-            pstmt.setString(1, player.getUuid());
-            pstmt.setString(2, player.getName());
-            pstmt.setString(3, player.getRankId());
-            pstmt.setString(4, player.getProfession());
-            pstmt.setString(5, player.getOldProfession());
-            pstmt.setDouble(6, player.getEmeralds());
-            pstmt.setInt(7, player.getAchievements());
-            pstmt.setDouble(8, player.getProfessionTotalXP());
-            pstmt.setBoolean(9, player.isPlayerVisibility());
-            pstmt.setBoolean(10, player.isGeriVisibility());
-            pstmt.setString(11, player.getProfessionFormat());
-            pstmt.setBoolean(12, player.isProfessionNumberFormat());
-            pstmt.setLong(13, player.getLastLoginTime());
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+            checkStmt.setString(1, player.getUuid());
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                rs.next();
+                int count = rs.getInt(1);  // Get the number of records with the same UUID
 
-            pstmt.executeUpdate();
-            System.out.println("Inserted player: " + player.getName());
+                if (count > 0) {
+                    // Player exists, update the record
+                    try (PreparedStatement updateStmt = connection.prepareStatement(updateSql)) {
+                        updateStmt.setString(1, player.getName());
+                        updateStmt.setString(2, player.getRankId());
+                        updateStmt.setString(3, player.getProfession());
+                        updateStmt.setString(4, player.getOldProfession());
+                        updateStmt.setDouble(5, player.getEmeralds());
+                        updateStmt.setInt(6, player.getAchievements());
+                        updateStmt.setDouble(7, player.getProfessionTotalXP());
+                        updateStmt.setBoolean(8, player.isPlayerVisibility());
+                        updateStmt.setBoolean(9, player.isGeriVisibility());
+                        updateStmt.setString(10, player.getProfessionFormat());
+                        updateStmt.setBoolean(11, player.isProfessionNumberFormat());
+                        updateStmt.setLong(12, player.getLastLoginTime());
+                        updateStmt.setString(13, player.getUuid());  // WHERE uuid = ?
+                        updateStmt.executeUpdate();
+                        System.out.println("Updated player: " + player.getName());
+                    }
+                } else {
+                    // Player does not exist, insert a new record
+                    try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                        insertStmt.setString(1, player.getUuid());
+                        insertStmt.setString(2, player.getName());
+                        insertStmt.setString(3, player.getRankId());
+                        insertStmt.setString(4, player.getProfession());
+                        insertStmt.setString(5, player.getOldProfession());
+                        insertStmt.setDouble(6, player.getEmeralds());
+                        insertStmt.setInt(7, player.getAchievements());
+                        insertStmt.setDouble(8, player.getProfessionTotalXP());
+                        insertStmt.setBoolean(9, player.isPlayerVisibility());
+                        insertStmt.setBoolean(10, player.isGeriVisibility());
+                        insertStmt.setString(11, player.getProfessionFormat());
+                        insertStmt.setBoolean(12, player.isProfessionNumberFormat());
+                        insertStmt.setLong(13, player.getLastLoginTime());
+                        insertStmt.executeUpdate();
+                        System.out.println("Inserted new player: " + player.getName());
+                    }
+                }
+            }
         } catch (SQLException e) {
-            System.out.println("Error inserting player: " + e.getMessage());
+            System.out.println("Error inserting or updating player: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
 
 
     public DatabasePlayer getPlayer(String uuid) {
