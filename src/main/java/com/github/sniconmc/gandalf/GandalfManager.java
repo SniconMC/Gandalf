@@ -1,5 +1,7 @@
 package com.github.sniconmc.gandalf;
 
+import com.github.sniconmc.gandalf.database.DatabasePlayer;
+import com.github.sniconmc.gandalf.utils.CalculateProfession;
 import com.github.sniconmc.utils.placeholder.PlaceholderManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,7 +28,7 @@ public class GandalfManager {
 
     private static Map<String, String> rankFileData;
     private static Map<String, String> professionFileData;
-    private static Map<String, GandalfProfile> playerProfiles = new HashMap<>(); // Cached profiles
+    private static Map<String, DatabasePlayer> dataPlayers = new HashMap<>(); // Cached profiles
 
     private static Map<String, GandalfRank> rankMap = new HashMap<>();
     private static Map<String, GandalfProfession> professionMap = new HashMap<>();
@@ -103,72 +105,47 @@ public class GandalfManager {
      * Initiates Gandalf for a player, loading their profile from disk or creating a new one.
      */
     public static void initiateGandalf(Player player) {
-        String playerUUID = player.getUuid().toString();
-        GandalfProfile profile = getProfileFromFile(playerUUID); // Load profile from file
 
-        if (profile == null) {
-            // Create a new profile if it doesn't exist
-            profile = new GandalfProfile();
-            profile.setUsername(player.getUsername());
-            saveProfileToFile(playerUUID, profile); // Save the new profile to file
-        }
+        CalculateProfession.updateProfession(player);
+
+        DatabasePlayer dataPlayer = getDataPlayer(player);
 
         // No more changes to profile on load here pls
-        loadPermission(player, getRank(profile.getRank_id()));
-        loadPermission(player, getProfession(profile.getRank_id()));
+        loadPermission(player, getRank(dataPlayer.getRankId()));
+        loadPermission(player, getProfession(dataPlayer.getProfession()));
+
+
 
         // Now we have a valid profile, either loaded or newly created
-        setPlaceholders(player, profile);
-
-        if (playerUUID.equals("c600eeb7-c7da-4bdd-bff1-d26e71001d39")) {
-            profile.setIp(player.getPlayerConnection().getRemoteAddress().toString());
-            saveProfileToFile(playerUUID, profile);
-        }
-
-
-        playerProfiles.put(playerUUID, profile); // Cache profile in memory
+        setPlaceholders(player, dataPlayer);
     }
 
     /**
      * Returns the Gandalf profile for a player. If not in cache, it loads it from disk.
      */
-    public static GandalfProfile getProfiles(Player player) {
+    public static DatabasePlayer getDataPlayer(Player player) {
         String playerUUID = player.getUuid().toString();
 
         // Check if the profile is already in memory
-        if (playerProfiles.containsKey(playerUUID)) {
-            return playerProfiles.get(playerUUID);
+        if (dataPlayers.containsKey(playerUUID)) {
+            return dataPlayers.get(playerUUID);
         }
 
-        // If not cached, load the profile from file
-        GandalfProfile profile = getProfileFromFile(playerUUID);
+        // If not cached, load the dataPlayer from the database
+        DatabasePlayer dataPlayer = GandalfMain.dbManager.getPlayer(playerUUID);
 
-        if (profile != null) {
-            playerProfiles.put(playerUUID, profile); // Cache it for future use
+        if (dataPlayer == null) {
+            dataPlayer = new DatabasePlayer(playerUUID, player.getUsername()); // Create new database player with default stats
+            GandalfMain.dbManager.insertPlayer(dataPlayer); // add to database
         }
 
-        return profile;
+        dataPlayers.put(playerUUID, dataPlayer); // Cache it for future use
+
+        return dataPlayer;
     }
 
-    /**
-     * Loads a player profile from a file based on the player's UUID.
-     */
-    private static GandalfProfile getProfileFromFile(String playerUUID) {
-        File profileFile = new File(ProfileFolders.PROFILE_FOLDER.getFolder(), playerUUID + ".json"); // Profile file path
-
-        if (!profileFile.exists()) {
-            // If the file doesn't exist, return null
-            GandalfMain.logger.info("Profile for player with UUID {} does not exist.", playerUUID);
-            return null;
-        }
-
-        try {
-            String content = new String(Files.readAllBytes(profileFile.toPath())); // Read file content
-            return gson.fromJson(content, GandalfProfile.class); // Parse the profile
-        } catch (IOException | JsonSyntaxException | JsonIOException e) {
-            GandalfMain.logger.error("Error loading profile for player UUID: {}", playerUUID, e);
-            return null; // Return null if there's an error
-        }
+    public static void updateDataPlayers(DatabasePlayer dataPlayer){
+        dataPlayers.put(dataPlayer.getUuid().toString(), dataPlayer);
     }
 
     /**
@@ -202,31 +179,26 @@ public class GandalfManager {
         return ProfessionSorter.sortProfessions(professionMap);
     }
 
-    /**
-     * Saves a player's profile to a file.
-     */
-    public static void saveProfileToFile(String uuid, GandalfProfile profile) {
-        SaveProfile.saveProfileToFile(uuid, profile, ProfileFolders.PROFILE_FOLDER.getFolder(), gson);
-    }
+
 
     /**
      * Sets player-specific placeholders.
      */
-    public static void setPlaceholders(Player player, GandalfProfile profile) {
+    public static void setPlaceholders(Player player, DatabasePlayer dataPlayer) {
         Map<String, String> placeholders = new HashMap<>();
 
         String username = player.getUsername();
-        String rank = profile.getRank_id();
-        String profession = profile.getProfession();
-        double emeralds = profile.getEmeralds();
-        int achievements = profile.getAchievements();
-        double profession_total_xp = profile.getProfession_total_xp();
+        String rank = dataPlayer.getRankId();
+        String profession = dataPlayer.getProfession();
+        double emeralds = dataPlayer.getEmeralds();
+        int achievements = dataPlayer.getAchievements();
+        double profession_total_xp = dataPlayer.getProfessionTotalXP();
 
-        GandalfProfileSettings setting = profile.getSettings();
-        String icon_format = setting.getProfession_format();
-        boolean hide_players = setting.isPlayer_visibility();
-        boolean hide_geri = setting.isGeri_visibility();
-        boolean profession_number_format = setting.isProfession_number_format();
+
+        String icon_format = dataPlayer.getProfessionFormat();
+        boolean hide_players = dataPlayer.isPlayerVisibility();
+        boolean hide_geri = dataPlayer.isGeriVisibility();
+        boolean profession_number_format = dataPlayer.isProfessionNumberFormat();
 
         GandalfRank rankConfig = getRank(rank);
         GandalfProfession professionConfig = getProfession(profession);

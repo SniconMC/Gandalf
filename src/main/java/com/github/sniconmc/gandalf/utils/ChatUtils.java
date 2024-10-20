@@ -1,5 +1,6 @@
 package com.github.sniconmc.gandalf.utils;
 
+import com.github.sniconmc.gandalf.database.DatabasePlayer;
 import com.github.sniconmc.utils.placeholder.PlaceholderReplacer;
 import com.github.sniconmc.utils.text.ColorUtils;
 import com.github.sniconmc.utils.text.TextUtils;
@@ -18,22 +19,21 @@ public class ChatUtils {
 
     public static void sendChatMessage(Player viewer, Player sender, PlayerChatEvent event) {
 
-        GandalfProfile profile = GandalfManager.getProfiles(viewer);
-        if (profile == null) {
+        DatabasePlayer dataPlayer = GandalfManager.getDataPlayer(viewer);
+        if (dataPlayer == null) {
             return;
         }
-        GandalfRank rank = GandalfManager.getRank(profile.getRank_id());
+        GandalfRank rank = GandalfManager.getRank(dataPlayer.getRankId());
         if (rank == null) {
             return;
         }
 
-        GandalfProfileSettings settings = profile.getSettings();
         String format = "";
 
-        if (settings.getProfession_format().equals("icon")) {
+        if (dataPlayer.getProfessionFormat().equals("icon")) {
             format = rank.getRankFormatSimple();
         }
-        if (settings.getProfession_format().equals("text")) {
+        if (dataPlayer.getProfessionFormat().equals("text")) {
             format = rank.getRankFormat();
         }
         Component message = TextUtils.convertStringToComponent(PlaceholderReplacer.replacePlaceholders(sender, format)).append(Component.text(": " + event.getMessage()).color(ColorUtils.StringToTextColor(rank.getRankChatColor())));

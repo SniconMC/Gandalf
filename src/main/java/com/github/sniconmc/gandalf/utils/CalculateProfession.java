@@ -3,6 +3,7 @@ package com.github.sniconmc.gandalf.utils;
 import com.github.sniconmc.container.config.ContainerItem;
 import com.github.sniconmc.container.config.ContainerItemData;
 import com.github.sniconmc.container.config.ContainerItemDisplay;
+import com.github.sniconmc.gandalf.database.DatabasePlayer;
 import com.github.sniconmc.utils.placeholder.PlaceholderManager;
 import com.github.sniconmc.utils.text.TextUtils;
 import com.google.gson.Gson;
@@ -19,12 +20,12 @@ import java.util.*;
 public class CalculateProfession {
 
     public static void updateProfession(Player player) {
-        GandalfProfile profile = GandalfManager.getProfiles(player);
-        Double totalXP = profile.getProfession_total_xp();
+        DatabasePlayer dataPlayer = GandalfManager.getDataPlayer(player);
+        Double totalXP = dataPlayer.getProfessionTotalXP();
         List<GandalfProfession> professions = GandalfManager.getAllProfessions();
 
         double cumulativeXP = 0; // Keep track of cumulative XP for professions
-        String highestUnlockedProfessionId = profile.getProfession(); // Start with the current profession in the profile
+        String highestUnlockedProfessionId = dataPlayer.getProfession(); // Start with the current profession in the profile
 
         // Determine the highest unlocked profession based on total XP
         for (GandalfProfession profession : professions) {
@@ -36,16 +37,16 @@ public class CalculateProfession {
         }
 
         // Check if we need to update the profile and reload the GUI
-        if (!profile.getProfession().equals(highestUnlockedProfessionId)) {
-            profile.setOldProfession(profile.getProfession());
-            profile.setProfession(highestUnlockedProfessionId); // Update the profile with the new highest profession
-            updateProfessionGUI(player, profile); // Update the GUI with the new profession
+        if (!dataPlayer.getProfession().equals(highestUnlockedProfessionId)) {
+            dataPlayer.setOldProfession(dataPlayer.getProfession());
+            dataPlayer.setProfession(highestUnlockedProfessionId); // Update the profile with the new highest profession
+            updateProfessionGUI(player, dataPlayer); // Update the GUI with the new profession
 
-            String oldProfessionStyle = GandalfManager.getProfession(profile.getOldProfession()).getProfession_style_sidebar();
-            String professionStyle = GandalfManager.getProfession(profile.getProfession()).getProfession_style_sidebar();
+            String oldProfessionStyle = GandalfManager.getProfession(dataPlayer.getOldProfession()).getProfession_style_sidebar();
+            String professionStyle = GandalfManager.getProfession(dataPlayer.getProfession()).getProfession_style_sidebar();
 
-            String oldProfessionStyleIcon = GandalfManager.getProfession(profile.getOldProfession()).getProfession_icon_style();
-            String professionStyleIcon = GandalfManager.getProfession(profile.getProfession()).getProfession_icon_style();
+            String oldProfessionStyleIcon = GandalfManager.getProfession(dataPlayer.getOldProfession()).getProfession_icon_style();
+            String professionStyleIcon = GandalfManager.getProfession(dataPlayer.getProfession()).getProfession_icon_style();
 
             player.sendMessage(TextUtils.convertStringToComponent(
                     "<strikethrough><gray>                                                                                 </gray></strikethrough>\n" +
@@ -58,12 +59,14 @@ public class CalculateProfession {
             ));
 
         }
+
+        ProfileUtils.update(dataPlayer);
     }
 
-    public static void updateProfessionGUI(Player player, GandalfProfile profile) {
+    public static void updateProfessionGUI(Player player, DatabasePlayer dataPlayer) {
         Map<String, String> placeholders = new HashMap<>();
         List<GandalfProfession> professions = GandalfManager.getAllProfessions();
-        Double totalXP = profile.getProfession_total_xp();
+        Double totalXP = dataPlayer.getProfessionTotalXP();
 
         // StringBuilder to hold all JSON items
         StringBuilder jsonItemsBuilder = new StringBuilder();
@@ -113,19 +116,19 @@ public class CalculateProfession {
             if (totalXP >= cumulativeXP) {
                 item.setId("minecraft:green_stained_glass_pane"); // Unlocked
                 display.getLore().add(List.of("<gray>Progress to " + profession.getProfession_icon_style() + " " + profession.getProfession_style_sidebar() + ":</gray>"));
-                display.getLore().add(List.of(getProgressBar(profile ,totalXP, cumulativeXP,  profession.getXpRequired())));
+                display.getLore().add(List.of(getProgressBar(dataPlayer ,totalXP, cumulativeXP,  profession.getXpRequired())));
                 display.getLore().add(List.of("<green><bold>Unlocked</bold></green>"));
 
 
             } else if (i > 1 && totalXP >= cumulativeXP - profession.getXpRequired()) {
                 item.setId("minecraft:orange_stained_glass_pane"); // Below this level
                 display.getLore().add(List.of("<gray>Progress to " + profession.getProfession_icon_style() + " " + profession.getProfession_style_sidebar() + ":</gray>"));
-                display.getLore().add(List.of(getProgressBar(profile ,totalXP, cumulativeXP,  profession.getXpRequired())));
+                display.getLore().add(List.of(getProgressBar(dataPlayer ,totalXP, cumulativeXP,  profession.getXpRequired())));
                 display.getLore().add(List.of("<red><bold>Locked</bold></red>"));
             } else {
                 item.setId("minecraft:red_stained_glass_pane"); // Locked
                 display.getLore().add(List.of("<gray>Progress to " + profession.getProfession_icon_style() + " " + profession.getProfession_style_sidebar() + ":</gray>"));
-                display.getLore().add(List.of(getProgressBar(profile ,totalXP, cumulativeXP,  profession.getXpRequired())));
+                display.getLore().add(List.of(getProgressBar(dataPlayer ,totalXP, cumulativeXP,  profession.getXpRequired())));
                 display.getLore().add(List.of("<red><bold>Locked</bold></red>"));
             }
 
@@ -145,7 +148,7 @@ public class CalculateProfession {
             }
             jsonItemsBuilder.append(prettyJson);
 
-            if (Objects.equals(profile.getProfession(), profession.getProfession_id())) {
+            if (Objects.equals(dataPlayer.getProfession(), profession.getProfession_id())) {
                 progession.add(List.of("\"<green> →  </green>" + profession.getProfession_icon_style() + " " + profession.getProfession_style() + "\""));
             } else {
                 progession.add(List.of("\"     " + profession.getProfession_icon_style() + " " + profession.getProfession_style() + "\""));
@@ -160,17 +163,17 @@ public class CalculateProfession {
         double maxXP = professions.stream().mapToDouble(GandalfProfession::getXpRequired).sum(); // Total XP required for all professions
 
         // Use getProgressBar to calculate the progress towards max profession
-        String progressBar = getProgressBar(profile,totalXP, maxXP, maxXP);
+        String progressBar = getProgressBar(dataPlayer,totalXP, maxXP, maxXP);
 
         // Set the placeholder with the progress bar
         placeholders.put("max_profession_xp", String.valueOf(maxXP));
         placeholders.put("player_percentage_to_max", progressBar);
         PlaceholderManager.addPlaceholdersToPlayer(player, placeholders);
 
-        ProfileUtils.update(player, profile);
+        ProfileUtils.update(dataPlayer);
     }
 
-    public static String getProgressBar(GandalfProfile profile, double totalXP, double cumulativeXP, double xpRequired) {
+    public static String getProgressBar(DatabasePlayer dataPlayer, double totalXP, double cumulativeXP, double xpRequired) {
         // Calculate progress percentage based on current profession
         double progress = (totalXP - (cumulativeXP - xpRequired)) / xpRequired;
 
@@ -214,14 +217,14 @@ public class CalculateProfession {
             double overflowXP = totalXP - xpRequired;
             if (overflowXP > 0) {
                 // If overflow XP exists, show it in number format or percentage format based on settings
-                if (profile.getSettings().isProfession_number_format()) {
+                if (dataPlayer.isProfessionNumberFormat()) {
                     return progressBar + " <yellow>" + xpRequired + " / </yellow><gold>" + xpRequired + "</gold> " + formatWithUnitPrefix(overflowXP);
                 } else {
                     return progressBar + " <yellow>" + formattedProgressPercent + "</yellow><gold>%</gold> " + formatWithUnitPrefix(overflowXP);
                 }
             } else {
                 // If no overflow, show regular progress
-                if (profile.getSettings().isProfession_number_format()) {
+                if (dataPlayer.isProfessionNumberFormat()) {
                     return progressBar + " <yellow>" + xpProgress + " / </yellow><gold>" + xpRequired + "</gold>";
                 } else {
                     return progressBar + " <yellow>" + formattedProgressPercent + "</yellow><gold>%</gold>";
@@ -229,7 +232,7 @@ public class CalculateProfession {
             }
         } else {
             // If profession isn't unlocked, just show progress without overflow
-            if (profile.getSettings().isProfession_number_format()) {
+            if (dataPlayer.isProfessionNumberFormat()) {
                 return progressBar + " <yellow>" + xpProgress + " / </yellow><gold>" + xpRequired + "</gold>";
             } else {
                 return progressBar + " <yellow>" + formattedProgressPercent + "</yellow><gold>%</gold>";

@@ -1,5 +1,6 @@
 package com.github.sniconmc.gandalf.utils;
 
+import com.github.sniconmc.gandalf.database.DatabasePlayer;
 import com.github.sniconmc.utils.placeholder.PlaceholderReplacer;
 import com.github.sniconmc.utils.text.TextUtils;
 import net.minestom.server.entity.GameMode;
@@ -32,12 +33,12 @@ public class TabUtils {
 
     public static String getPlayerDisplayName(Player viewer, Player playerToSet) {
 
-        GandalfProfile profile = GandalfManager.getProfiles(viewer);
-        if (profile == null) {
+        DatabasePlayer dataPlayer = GandalfManager.getDataPlayer(viewer);
+        if (dataPlayer == null) {
             return playerToSet.getUsername();
         }
 
-        String id = profile.getRank_id();
+        String id = dataPlayer.getRankId();
 
         GandalfRank config = GandalfManager.getRank(id);
         if (config == null) {
@@ -46,7 +47,7 @@ public class TabUtils {
         String format;
 
         // Fetch the profession format and convert to lowercase
-        String professionFormat = profile.getSettings().getProfession_format().toLowerCase();
+        String professionFormat = dataPlayer.getProfessionFormat().toLowerCase();
 
         // Switch based on profession format
         format = switch (professionFormat) {
