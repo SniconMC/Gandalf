@@ -69,7 +69,7 @@ public class DatabaseManager {
                 + " geri_visibility BOOLEAN DEFAULT FALSE, "    // Stored as part of settings
                 + " profession_format VARCHAR(255) DEFAULT 'icon', "
                 + " profession_number_format BOOLEAN DEFAULT FALSE, "
-                + " last_login_time BIGINT, "  // Timestamp as BIGIN
+                + " last_login_time BIGINT "  // Timestamp as BIGIN
                 + ");";
 
         try (Statement stmt = connection.createStatement()) {
