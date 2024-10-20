@@ -89,9 +89,9 @@ public class DatabaseManager {
 
         // Check if the player already exists
         String checkSql = "SELECT COUNT(*) FROM players WHERE uuid = ?";
-        String insertSql = "INSERT INTO players (uuid, name, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
+        String insertSql = "INSERT INTO players (uuid, username, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String updateSql = "UPDATE players SET name = ?, rank_id = ?, profession = ?, old_profession = ?, emeralds = ?, achievements = ?, profession_total_xp = ?, player_visibility = ?, geri_visibility = ?, profession_format = ?, profession_number_format = ?, last_login_time = ? WHERE uuid = ?";
+        String updateSql = "UPDATE players SET username = ?, rank_id = ?, profession = ?, old_profession = ?, emeralds = ?, achievements = ?, profession_total_xp = ?, player_visibility = ?, geri_visibility = ?, profession_format = ?, profession_number_format = ?, last_login_time = ? WHERE uuid = ?";
 
         try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
             checkStmt.setString(1, player.getUuid());
