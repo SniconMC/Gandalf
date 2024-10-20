@@ -81,18 +81,18 @@ public class DatabaseManager {
         }
     }
 
-    public void insertPlayer(String uuid, String name, String rankId, String profession, String oldProfession, double emeralds, int achievements, double professionTotalXP, boolean playerVisibility, boolean geriVisibility, String professionFormat, boolean professionNumberFormat, long lastLoginTime) {
+    public void insertPlayer(String uuid, String username, String rankId, String profession, String oldProfession, double emeralds, int achievements, double professionTotalXP, boolean playerVisibility, boolean geriVisibility, String professionFormat, boolean professionNumberFormat, long lastLoginTime) {
         if (connection == null) {
             System.out.println("Cannot insert player. No database connection.");
             return;
         }
 
-        String sql = "INSERT INTO players (uuid, name, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
+        String sql = "INSERT INTO players (uuid, username, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, uuid);  // UUID of the player
-            pstmt.setString(2, name);
+            pstmt.setString(2, username);
             pstmt.setString(3, rankId);
             pstmt.setString(4, profession);
             pstmt.setString(5, oldProfession);
@@ -105,7 +105,7 @@ public class DatabaseManager {
             pstmt.setBoolean(12, professionNumberFormat);
             pstmt.setLong(13, lastLoginTime);
             pstmt.executeUpdate();
-            System.out.println("Inserted player: " + name);
+            System.out.println("Inserted player: " + username);
         } catch (SQLException e) {
             System.out.println("Error inserting player: " + e.getMessage());
             e.printStackTrace();
@@ -118,7 +118,7 @@ public class DatabaseManager {
             return;
         }
 
-        String sql = "INSERT INTO players (uuid, name, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
+        String sql = "INSERT INTO players (uuid, username, rank_id, profession, old_profession, emeralds, achievements, profession_total_xp, player_visibility, geri_visibility, profession_format, profession_number_format, last_login_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -152,7 +152,7 @@ public class DatabaseManager {
             return null;
         }
 
-        String sql = "SELECT uuid, name, rank_id, profession, old_profession, emeralds, achievements, "
+        String sql = "SELECT uuid, username, rank_id, profession, old_profession, emeralds, achievements, "
                 + "profession_total_xp, player_visibility, geri_visibility, profession_format, "
                 + "profession_number_format, last_login_time "
                 + "FROM players WHERE uuid = ?";
@@ -165,7 +165,7 @@ public class DatabaseManager {
                     // Retrieve all columns and create a DatabasePlayer object
                     return new DatabasePlayer(
                             rs.getString("uuid"),
-                            rs.getString("name"),
+                            rs.getString("username"),
                             rs.getString("rank_id"),
                             rs.getString("profession"),
                             rs.getString("old_profession"),
