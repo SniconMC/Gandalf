@@ -8,7 +8,6 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.entity.PlayerSkin;
 import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
 import com.github.sniconmc.gandalf.GandalfManager;
-import com.github.sniconmc.gandalf.config.GandalfProfile;
 import com.github.sniconmc.gandalf.config.GandalfRank;
 
 import java.util.List;
@@ -44,6 +43,7 @@ public class TabUtils {
         if (config == null) {
             return playerToSet.getUsername();
         }
+
         String format;
 
         // Fetch the profession format and convert to lowercase
